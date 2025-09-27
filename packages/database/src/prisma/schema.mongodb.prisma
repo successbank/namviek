@@ -1,6 +1,6 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("MONGODB_URL")
 }
 
 generator client {
@@ -50,7 +50,7 @@ enum ActivityObjectType {
 }
 
 model User {
-  id                  String                @id @default(uuid())
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
   email               String                @unique
   password            String
   name                String?
@@ -63,37 +63,37 @@ model User {
   members             Members[]
   settings            Json?
   organizationMembers OrganizationMembers[]
-  createdAt           DateTime?             @default(now())
+  createdAt           DateTime?
   createdBy           String?
-  updatedAt           DateTime?             @updatedAt
+  updatedAt           DateTime?
   updatedBy           String?
 }
 
 model Favorites {
-  id        String    @id @default(uuid())
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   icon      String
   link      String
-  uid       String
-  orgId     String
+  uid       String    @db.ObjectId
+  orgId     String    @db.ObjectId
   type      String
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
   createdBy String?
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
   updatedBy String?
 }
 
 model Organization {
-  id             String    @id @default(uuid())
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
   name           String    @unique
   slug           String    @unique
   cover          String?
   avatar         String?
   maxStorageSize Int?
   desc           String?
-  createdAt      DateTime? @default(now())
+  createdAt      DateTime?
   createdBy      String?
-  updatedAt      DateTime? @updatedAt
+  updatedAt      DateTime?
   updatedBy      String?
 }
 
@@ -103,26 +103,26 @@ enum OrgStorageType {
 }
 
 model OrganizationStorage {
-  id             String         @id @default(uuid())
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
   type           OrgStorageType
   config         Json
-  organizationId String
-  createdAt      DateTime?      @default(now())
+  organizationId String         @db.ObjectId
+  createdAt      DateTime?
   createdBy      String?
-  updatedAt      DateTime?      @updatedAt
+  updatedAt      DateTime?
   updatedBy      String?
 }
 
 model OrganizationMembers {
-  id             String           @id @default(uuid())
-  uid            String
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  uid            String           @db.ObjectId
   status         InvitationStatus
-  organizationId String
+  organizationId String           @db.ObjectId
   role           OrganizationRole
   users          User             @relation(fields: [uid], references: [id])
-  createdAt      DateTime?        @default(now())
+  createdAt      DateTime?
   createdBy      String?
-  updatedAt      DateTime?        @updatedAt
+  updatedAt      DateTime?
   updatedBy      String?
 }
 
@@ -133,13 +133,13 @@ enum CounterType {
 }
 
 model Counter {
-  id      String      @id @default(uuid())
+  id      String      @id @default(auto()) @map("_id") @db.ObjectId
   type    CounterType
   counter Int
 }
 
 model Test {
-  id    String @id @default(uuid())
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
   title String
   order Int
 }
@@ -163,12 +163,12 @@ enum FieldType {
 }
 
 model Field {
-  id        String    @id @default(uuid())
-  projectId String
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  projectId String    @db.ObjectId
   name      String
   type      FieldType
   icon      String?
-  hidden    Boolean?  @default(false)
+  hidden    Boolean?
   width     Int
   order     Int
   desc      String?
@@ -184,7 +184,7 @@ enum TaskType {
 }
 
 model Task {
-  id      String    @id @default(uuid())
+  id      String    @id @default(auto()) @map("_id") @db.ObjectId
   title   String
   desc    String?
   dueDate DateTime?
@@ -198,98 +198,113 @@ model Task {
   plannedStartDate DateTime?
   plannedDueDate   DateTime?
   startDate        DateTime?
-  projectId        String
+  projectId        String        @db.ObjectId
   priority         TaskPriority?
-  visionId         String?
-  taskStatusId     String?
-  tagIds           String[]
-  assigneeIds      String[]
-  fileIds          String[]
-  parentTaskId     String?
+  visionId         String?       @db.ObjectId
+  taskStatusId     String?       @db.ObjectId
+  tagIds           String[]      @db.ObjectId
+  assigneeIds      String[]      @db.ObjectId
+  fileIds          String[]      @db.ObjectId
+  parentTaskId     String?       @db.ObjectId
   progress         Int?
   done             Boolean       @default(false)
+  // do not store `point` as objectID, cuz we just need to fill the point value
   taskPoint        Int?
 
   customFields Json?
 
   createdBy String?
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
   updatedBy String?
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
 }
 
 model Grid {
-  id        String  @id @default(uuid())
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   title     String
   cover     String?
-  projectId String
+  projectId String  @db.ObjectId
 
   customFields Json?
-  isDeleted    Boolean? @default(false)
+  isDeleted    Boolean?
 
   createdBy String?
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
   updatedBy String?
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
 }
 
 model TaskStatus {
-  id        String     @id @default(uuid())
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   color     String
   order     Int
-  projectId String
+  projectId String     @db.ObjectId
   type      StatusType @default(TODO)
 }
 
 model TaskChecklist {
-  id     String    @id @default(uuid())
-  taskId String
+  id     String    @id @default(auto()) @map("_id") @db.ObjectId
+  taskId String    @db.ObjectId
   title  String
   order  Int
-  done   Boolean?  @default(false)
+  done   Boolean?
   doneAt DateTime?
 }
 
+// Tag used for Projects and Tasks
 model Tag {
-  id        String @id @default(uuid())
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   color     String
-  projectId String
+  projectId String @db.ObjectId
 }
 
 model TaskPoint {
-  id        String  @id @default(uuid())
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   point     Int
-  projectId String
+  projectId String  @db.ObjectId
   icon      String?
 }
 
+type taskAutomateThenType {
+  change String
+  value  String
+}
+
+type taskAutomateWhenType {
+  happens   String
+  is        String
+  valueFrom String?
+  valueTo   String?
+  equal     String?
+}
+
 model TaskAutomation {
-  id             String    @id @default(uuid())
-  organizationId String
-  projectId      String
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String    @db.ObjectId
+  projectId      String    @db.ObjectId
   when           Json
   then           Json
   createdBy      String?
-  createdAt      DateTime? @default(now())
+  createdAt      DateTime?
   updatedBy      String?
-  updatedAt      DateTime? @updatedAt
+  updatedAt      DateTime?
 }
 
 model Scheduler {
-  id             String  @id @default(uuid())
-  organizationId String
-  projectId      String
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String  @db.ObjectId
+  projectId      String  @db.ObjectId
   cronId         String?
 
   trigger Json
   action  Json
 
   createdBy String?
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
   updatedBy String?
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
 }
 
 enum FileType {
@@ -305,9 +320,9 @@ enum FileOwnerType {
 }
 
 model FileStorage {
-  id             String         @id @default(uuid())
-  organizationId String
-  projectId      String
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String         @db.ObjectId
+  projectId      String         @db.ObjectId
   name           String
   keyName        String
   type           FileType
@@ -315,44 +330,45 @@ model FileStorage {
   size           Float?
   mimeType       String?
   parentId       String?
-  owner          String?
+  owner          String?        @db.ObjectId
   ownerType      FileOwnerType?
   isDeleted      Boolean?       @default(false)
   createdBy      String?
-  createdAt      DateTime?      @default(now())
+  createdAt      DateTime?
   deletedAt      DateTime?
   deletedBy      String?
 }
 
 model Project {
-  id            String   @id @default(uuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name          String
-  projectViewId String?
+  projectViewId String?  @db.ObjectId
   desc          String?
   cover         String?
   icon          String?
   isArchived    Boolean? @default(false)
   createdBy     String?
 
+  // these count settings is used for counting the number of tasks by days
   countMemberTask  Boolean? @default(false)
   countProjectTask Boolean? @default(true)
 
-  createdAt      DateTime? @default(now())
+  createdAt      DateTime?
   organizationId String
   updatedBy      String?
-  updatedAt      DateTime? @updatedAt
+  updatedAt      DateTime?
 }
 
 model ProjectSettingNotification {
-  id          String   @id @default(uuid())
-  uid         String
-  projectId   String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  uid         String   @db.ObjectId
+  projectId   String   @db.ObjectId
   taskChanges Boolean? @default(false)
   remind      Boolean? @default(false)
   overdue     Boolean? @default(false)
 
   createdBy String?
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
 }
 
 enum ProjectViewType {
@@ -368,44 +384,44 @@ enum ProjectViewType {
 }
 
 model ProjectView {
-  id        String          @id @default(uuid())
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
   name      String?
   type      ProjectViewType
-  onlyMe    Boolean?        @default(false)
+  onlyMe    Boolean?
   icon      String?
-  projectId String?
+  projectId String?         @db.ObjectId
   order     Int?
   data      Json?
 
   createdBy String?
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
   updatedBy String?
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
 }
 
 model Vision {
-  id             String    @id @default(uuid())
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
   name           String
-  projectId      String?
-  organizationId String?
-  parentId       String?
+  projectId      String?   @db.ObjectId
+  organizationId String?   @db.ObjectId
+  parentId       String?   @db.ObjectId
   startDate      DateTime?
   dueDate        DateTime?
   progress       Int?
   createdBy      String?
-  createdAt      DateTime? @default(now())
+  createdAt      DateTime?
 }
 
 model Members {
-  id        String     @id @default(uuid())
-  projectId String
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  projectId String     @db.ObjectId
   role      MemberRole
   users     User?      @relation(fields: [uid], references: [id])
-  uid       String?
+  uid       String?    @db.ObjectId
   createdBy String?
-  createdAt DateTime?  @default(now())
+  createdAt DateTime?
   updatedBy String?
-  updatedAt DateTime?  @updatedAt
+  updatedAt DateTime?
 }
 
 enum StatsType {
@@ -414,16 +430,16 @@ enum StatsType {
 }
 
 model Stats {
-  id        String    @id @default(uuid())
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
   type      StatsType
   data      Json?
-  uid       String?
-  projectId String?
-  orgId     String?
+  uid       String?   @db.ObjectId
+  projectId String?   @db.ObjectId
+  orgId     String?   @db.ObjectId
   year      Int
   month     Int
   date      Int
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
 }
 
 enum DashboardComponentType {
@@ -438,9 +454,9 @@ enum DashboardComponentType {
 }
 
 model DashboardComponent {
-  id          String                  @id @default(uuid())
+  id          String                  @id @default(auto()) @map("_id") @db.ObjectId
   dashboard   Dashboard?              @relation(fields: [dashboardId], references: [id])
-  dashboardId String?
+  dashboardId String?                 @db.ObjectId
   title       String?
   type        DashboardComponentType?
   config      Json?
@@ -450,82 +466,88 @@ model DashboardComponent {
   height      Int?                    @default(1)
 
   createdBy String?
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
   updatedBy String?
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
 }
 
 model Dashboard {
-  id                  String               @id @default(uuid())
+  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
   dashboardComponents DashboardComponent[]
   title               String?              @default("Untitled")
-  projectId           String?
+  projectId           String?              @db.ObjectId
   isDefault           Boolean?             @default(false)
 }
 
 enum ActivityType {
   TASK_CREATED
+  // TASK_CHANGED // change due date, task title, description
   TASK_TITLE_CHANGED
   TASK_DESC_CHANGED
   TASK_DUEDATE_CHANGED
+
   TASK_ASSIGNEE_ADDED
   TASK_ASSIGNEE_REMOVED
+
   TASK_STATUS_CREATED
   TASK_STATUS_CHANGED
+
   TASK_PROGRESS_CHANGED
   TASK_PRIORITY_CHANGED
   TASK_POINT_CHANGED
   TASK_VISION_CHANGED
+
   TASK_COMMENT_CREATED
   TASK_COMMENT_CHANGED
   TASK_COMMENT_REMOVED
+
   TASK_ATTACHMENT_ADDED
   TASK_ATTACHMENT_REMOVED
 }
 
 model Activity {
-  id         String             @id @default(uuid())
+  id         String             @id @default(auto()) @map("_id") @db.ObjectId
   objectId   String
   objectType ActivityObjectType
   type       ActivityType
   createdBy  String
   data       Json?
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime?          @updatedAt
+  createdAt  DateTime
+  updatedAt  DateTime?
   updatedBy  String?
 }
 
 model Comment {
-  id        String @id @default(uuid())
-  taskId    String
-  projectId String
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  taskId    String @db.ObjectId
+  projectId String @db.ObjectId
 
   content String
 
   createdBy String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime
+  updatedAt DateTime
 }
 
 model Application {
-  id             String   @id @default(uuid())
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   name           String
   description    String?
   clientId       String   @unique
   clientSecret   String
-  organizationId String
-  scopes         String[]
+  organizationId String   @db.ObjectId
+  scopes         String[] // Array of permitted scopes
 
-  createdAt DateTime? @default(now())
+  createdAt DateTime?
   createdBy String?
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime?
   updatedBy String?
 }
 
 model Timer {
-  id        String    @id @default(uuid())
-  taskId    String
-  userId    String
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  taskId    String    @db.ObjectId
+  userId    String    @db.ObjectId
   startTime DateTime
   endTime   DateTime?
   duration  Int       @default(0)
