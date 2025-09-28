@@ -2,8 +2,15 @@ import Image from 'next/image'
 
 export default function Logo() {
   return (
-    <h2 className="logo w-14 h-14 inline-flex items-center justify-center">
-      <Image src={'/logo71x71.png'} width={50} height={50} alt="Logo" />
-    </h2>
+    <div className="logo inline-flex items-center gap-2">
+      <Image
+        src={'/powernews-logo.svg'}
+        width={140}
+        height={42}
+        alt="PowerNews Logo"
+        className="w-auto h-10"
+        priority
+      />
+    </div>
   )
 }
